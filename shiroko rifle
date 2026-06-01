@@ -1,0 +1,38 @@
+// Load Shiroko Rifle
+        gltfLoader.load('https://raw.githubusercontent.com/KkhaosKhaotic/test2/main/shiroko_rifle_l_blue_archieve.glb', 
+            (gltf) => {
+                const gunMesh = gltf.scene;
+                
+                // Centering the model geometry locally inside its parent mesh to counter the pivot offset bug
+                const box = new THREE.Box3().setFromObject(gunMesh);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                gunMesh.position.sub(center); // Shift model geometry so local center is perfectly at (0,0,0)
+                
+                // Wrapper to rotate/scale it stably in its centered space
+                const gunWrapper = new THREE.Group();
+                gunWrapper.add(gunMesh);
+                
+                // Point it straight forward, slightly tilted inward (5 degrees) toward the center of the viewport
+                const tiltAngle = 5 * (Math.PI / 180); 
+                gunWrapper.rotation.set(0, (Math.PI * 0.5) - tiltAngle, 0); 
+                gunWrapper.scale.set(0.35, 0.35, 0.35);
+                
+                // Prevent rendering/clipping engine bugs by forcing frustum bounds updating
+                gunWrapper.traverse((child) => {
+                    if (child.isMesh) {
+                        child.frustumCulled = false;
+                        child.material.depthWrite = true;
+                    }
+                });
+                
+                // Add the rotated mesh directly into our stable screen-space pivot group
+                gunPivot.add(gunWrapper);
+                gunMeshLoaded = true;
+                console.log("Shiroko Rifle Mesh successfully attached to Viewport Pivot.");
+            },
+            undefined,
+            (error) => {
+                console.error("Error loading Shiroko Rifle model:", error);
+            }
+        );
